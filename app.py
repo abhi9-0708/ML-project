@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request
 import pandas as pd
 import textdistance
@@ -46,7 +47,7 @@ word_vectors = np.array([word_to_vector(word) for word in words])
 
 # Create a feature matrix and a target vector (for Decision Tree)
 X = word_vectors
-y = np.array([words_freq_dict[word] for word in words])  # Frequency can be a proxy for label (you can change this)
+y = np.array([words_freq_dict[word] for word in words])
 
 # Split the data into training, validation, and testing sets (60%, 20%, 20%)
 X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, random_state=42)
@@ -56,9 +57,16 @@ X_valid, X_test, y_valid, y_test = train_test_split(X_temp, y_temp, test_size=0.
 dt_classifier = DecisionTreeClassifier(random_state=42)
 dt_classifier.fit(X_train, y_train)
 
-# Evaluate the model on validation and test sets
+# Evaluate the model on training, validation, and test sets
+y_train_pred = dt_classifier.predict(X_train)
 y_valid_pred = dt_classifier.predict(X_valid)
 y_test_pred = dt_classifier.predict(X_test)
+
+# Calculate metrics for training set
+train_accuracy = accuracy_score(y_train, y_train_pred)
+train_precision = precision_score(y_train, y_train_pred, average='weighted')
+train_recall = recall_score(y_train, y_train_pred, average='weighted')
+train_f1 = f1_score(y_train, y_train_pred, average='weighted')
 
 # Calculate metrics for validation set
 valid_accuracy = accuracy_score(y_valid, y_valid_pred)
@@ -72,8 +80,14 @@ test_precision = precision_score(y_test, y_test_pred, average='weighted')
 test_recall = recall_score(y_test, y_test_pred, average='weighted')
 test_f1 = f1_score(y_test, y_test_pred, average='weighted')
 
-# Print average metrics for validation and test sets
-print(f"Validation Set Evaluation:")
+# Print average metrics for training, validation, and test sets
+print(f"Training Set Evaluation:")
+print(f"Accuracy: {train_accuracy:.2f}")
+print(f"Precision: {train_precision:.2f}")
+print(f"Recall: {train_recall:.2f}")
+print(f"F1 Score: {train_f1:.2f}")
+
+print(f"\nValidation Set Evaluation:")
 print(f"Accuracy: {valid_accuracy:.2f}")
 print(f"Precision: {valid_precision:.2f}")
 print(f"Recall: {valid_recall:.2f}")
@@ -84,6 +98,14 @@ print(f"Accuracy: {test_accuracy:.2f}")
 print(f"Precision: {test_precision:.2f}")
 print(f"Recall: {test_recall:.2f}")
 print(f"F1 Score: {test_f1:.2f}")
+
+# Check for overfitting or underfitting
+if train_accuracy > valid_accuracy + 0.1:
+    print("\nThe model may be overfitting.")
+elif train_accuracy < valid_accuracy - 0.1:
+    print("\nThe model may be underfitting.")
+else:
+    print("\nThe model is well-fitted.")
 
 # Jaccard similarity function
 def jaccard_similarity(str1, str2):
@@ -161,3 +183,4 @@ def handle_input_event(json_data):
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
+
